@@ -52,3 +52,36 @@ test('the live page is served at /', async () => {
   assert.ok(text.includes('/app.js'));
   assert.ok(js.includes('/api/status'));
 });
+
+function patroniLike(role) {
+  const s = http.createServer((q, r) => { r.setHeader('content-type', 'application/json'); r.end(JSON.stringify({ role, replication_state: 'streaming' })); });
+  return new Promise((resolve) => s.listen(0, '127.0.0.1', () => resolve(s)));
+}
+
+test('warning appears when nodes report roles but none is the leader', async () => {
+  const a = await patroniLike('replica'); const b = await patroniLike('replica');
+  const app = await start({ targets: [
+    { name: 'a', url: `http://127.0.0.1:${a.address().port}/` },
+    { name: 'b', url: `http://127.0.0.1:${b.address().port}/` }] });
+  const body = await (await fetch(url(app, '/api/status'))).json();
+  app.close(); a.close(); b.close();
+  assert.match(body.warning, /No leader/);
+  assert.strictEqual(body.targets[0].replication_state, 'streaming');
+});
+
+test('no warning when one node is primary', async () => {
+  const a = await patroniLike('primary'); const b = await patroniLike('replica');
+  const app = await start({ targets: [
+    { name: 'a', url: `http://127.0.0.1:${a.address().port}/` },
+    { name: 'b', url: `http://127.0.0.1:${b.address().port}/` }] });
+  const body = await (await fetch(url(app, '/api/status'))).json();
+  app.close(); a.close(); b.close();
+  assert.strictEqual(body.warning, undefined);
+});
+
+test('no warning for targets that report no roles (plain websites)', async () => {
+  const app = await start({ targets: [] });
+  const body = await (await fetch(url(app, '/api/status'))).json();
+  app.close();
+  assert.strictEqual(body.warning, undefined);
+});

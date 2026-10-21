@@ -1,0 +1,68 @@
+# Example 4: PostgreSQL with automatic failover (Patroni + etcd), behind one HAProxy address.
+# Start:  podman compose up -d --build      Stop:  podman compose down
+# Before first start, create the teacher login:  bash ../../scripts/make-teacher-password.sh <name>
+# The first start takes about a minute while the cluster is created.
+x-pg: &pg
+  build: .
+  depends_on: [pat-etcd]
+
+services:
+  # The cluster's "referee": a small store where the nodes agree who the leader is.
+  pat-etcd:
+    image: quay.io/coreos/etcd:v3.5.17
+    container_name: pat-etcd
+    command: >
+      etcd --name etcd1 --data-dir /etcd-data
+      --listen-client-urls http://0.0.0.0:2379 --advertise-client-urls http://pat-etcd:2379
+
+  # Three database nodes. They start identical; the first one up becomes leader.
+  pat-pg1:
+    <<: *pg
+    container_name: pat-pg1
+    environment:
+      PATRONI_NAME: pat-pg1
+      PATRONI_RESTAPI_CONNECT_ADDRESS: pat-pg1:8008
+      PATRONI_POSTGRESQL_CONNECT_ADDRESS: pat-pg1:5432
+  pat-pg2:
+    <<: *pg
+    container_name: pat-pg2
+    environment:
+      PATRONI_NAME: pat-pg2
+      PATRONI_RESTAPI_CONNECT_ADDRESS: pat-pg2:8008
+      PATRONI_POSTGRESQL_CONNECT_ADDRESS: pat-pg2:5432
+  pat-pg3:
+    <<: *pg
+    container_name: pat-pg3
+    environment:
+      PATRONI_NAME: pat-pg3
+      PATRONI_RESTAPI_CONNECT_ADDRESS: pat-pg3:8008
+      PATRONI_POSTGRESQL_CONNECT_ADDRESS: pat-pg3:5432
+
+  # The single address applications use: port 5001 on the server.
+  pat-haproxy:
+    image: docker.io/library/haproxy:lts-alpine
+    container_name: pat-haproxy
+    ports: ["5001:5432"]
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro,Z
+    depends_on: [pat-pg1, pat-pg2, pat-pg3]
+
+  status:
+    build: ../../shared/status-service
+    container_name: pat-status
+    environment:
+      CAPTION: "Three copies of one database. One is the leader and takes the writes; the others follow it. If the leader dies, the others agree on a new one."
+      TARGETS: '[{"name":"pat-etcd","url":"http://pat-etcd:2379/health"},{"name":"pat-pg1","url":"http://pat-pg1:8008/patroni"},{"name":"pat-pg2","url":"http://pat-pg2:8008/patroni"},{"name":"pat-pg3","url":"http://pat-pg3:8008/patroni"}]'
+      CONTROLLABLE: "pat-etcd,pat-pg1,pat-pg2,pat-pg3"
+    volumes:
+      - ${XDG_RUNTIME_DIR:-/run/user/1000}/podman/podman.sock:/run/podman/podman.sock
+    security_opt: ["label=disable"]
+
+  gateway:
+    image: docker.io/library/nginx:stable
+    container_name: pat-gateway
+    ports: ["9004:80"]
+    volumes:
+      - ../../shared/gateway/nginx.conf:/etc/nginx/nginx.conf:ro,Z
+      - ../../shared/gateway/htpasswd:/etc/nginx/htpasswd:ro,Z
+    depends_on: [status]

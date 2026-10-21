@@ -14,6 +14,7 @@ async function probeOne(target, timeoutMs) {
       if (body && typeof body.role === 'string') {
         result.role = body.role;
         if ('lag' in body) result.lag = body.lag;
+        if (typeof body.replication_state === 'string') result.replication_state = body.replication_state;
       }
     }
     return result;

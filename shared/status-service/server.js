@@ -39,7 +39,13 @@ function createApp(cfg) {
         probeAll(cfg.targets, cfg.timeoutMs),
         socketAvailable(cfg.socketPath),
       ]);
-      return send(res, 200, { caption: cfg.caption, targets, controlsAvailable, controllable: cfg.controllable });
+      const out = { caption: cfg.caption, targets, controlsAvailable, controllable: cfg.controllable };
+      // Database clusters: nodes that report a role but none is the writer means nobody can write.
+      const withRole = targets.filter((t) => t.role);
+      if (withRole.length > 0 && !withRole.some((t) => ['primary', 'master', 'leader'].includes(t.role))) {
+        out.warning = 'No leader: the database cannot accept writes right now.';
+      }
+      return send(res, 200, out);
     }
 
     if (req.method === 'POST' && pathname === '/api/control') {

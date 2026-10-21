@@ -36,3 +36,13 @@ Updates reach the server by hand: `git pull` in the folder where this repo is cl
 ## Round two (ideas, not built yet)
 
 Reverse proxy with HTTPS, monitoring and alerting, backups and restore, centralized logging, single sign-on, rate limiting and basic protection, load testing, CI/CD deploy.
+
+## Teacher guide
+
+1. **One-time:** `bash scripts/make-teacher-password.sh <name>` creates the login (stored as a hash in `shared/gateway/htpasswd`, never in git).
+2. **Enable the podman socket** (needed for the Stop/Start buttons): `systemctl --user enable --now podman.socket`. `scripts/check-server.sh` tells you if anything is missing.
+3. **Demo:** open the example's live page on the projector and `/teacher/` on your own screen, then press **Stop** on a server. Students watch the picture change; the site keeps working.
+4. **Reset:** press **Start** on everything that is red. If a start does not help: `podman compose down && podman compose up -d` in the example folder.
+5. **Checks after updating:** `bash tests/01-ha-nginx.sh` (and the same for 02, 03, 04). Each prints `all checks passed`.
+
+Students see only the public page, which cannot stop or start anything.

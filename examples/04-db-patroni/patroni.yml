@@ -1,0 +1,39 @@
+# Settings shared by all three nodes. Each node's own name and address come from
+# environment variables in compose.yaml (PATRONI_NAME and friends), which override this file.
+# The passwords here are DEMO values. Never reuse them for anything real.
+
+scope: demo                    # the cluster's name; nodes with the same scope belong together
+
+etcd3:
+  hosts: pat-etcd:2379         # where the leader election is kept
+
+restapi:
+  listen: 0.0.0.0:8008         # HAProxy and the live page ask each node about its role here
+
+bootstrap:                     # used once, by the very first node, to create the cluster
+  dcs:
+    ttl: 15                    # the leader must renew its "lease" within 15 s or lose it
+    loop_wait: 5               # how often each node looks at the cluster
+    retry_timeout: 5
+    maximum_lag_on_failover: 1048576   # a replica too far behind may not become leader
+    postgresql:
+      use_pg_rewind: true      # lets a returning old leader catch up instead of starting over
+      parameters:
+        wal_level: replica
+        hot_standby: "on"
+        max_wal_senders: 10
+        max_replication_slots: 10
+  initdb:
+    - encoding: UTF8
+    - data-checksums           # required by pg_rewind
+  pg_hba:                      # who may connect (demo: from anywhere inside the container network)
+    - host replication replicator 0.0.0.0/0 scram-sha-256
+    - host all all 0.0.0.0/0 scram-sha-256
+
+postgresql:
+  listen: 0.0.0.0:5432
+  data_dir: /home/postgres/data/pgdata
+  bin_dir: /usr/lib/postgresql/16/bin
+  authentication:
+    superuser:   { username: postgres,   password: postgres }
+    replication: { username: replicator, password: replicator }

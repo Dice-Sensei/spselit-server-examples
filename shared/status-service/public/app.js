@@ -15,7 +15,7 @@ function box(t, data) {
   label.textContent = t.name;
   const state = document.createElement('span');
   state.textContent = t.up
-    ? (t.role ? t.role : 'up') + (t.lag != null ? ' (lag ' + t.lag + ')' : '') + (t.ms != null ? ' · ' + t.ms + ' ms' : '')
+    ? (t.role ? t.role + (t.replication_state ? ' (' + t.replication_state + ')' : '') : 'up') + (t.lag != null ? ' (lag ' + t.lag + ')' : '') + (t.ms != null ? ' · ' + t.ms + ' ms' : '')
     : 'DOWN';
   div.append(label, state);
   if (isTeacher && data.controlsAvailable && data.controllable.includes(t.name)) {
@@ -32,6 +32,7 @@ async function refresh() {
     const data = await (await fetch('/api/status')).json();
     document.getElementById('caption').textContent = data.caption;
     document.getElementById('targets').replaceChildren(...data.targets.map((t) => box(t, data)));
+    document.getElementById('warning').textContent = data.warning || '';
     document.getElementById('note').textContent = isTeacher && !data.controlsAvailable
       ? 'Controls unavailable: podman socket not reachable.' : '';
   } catch {
