@@ -1,0 +1,43 @@
+# Example 3: website fallback. A spare page takes over when the main site stops.
+# Start:  podman compose up -d      Stop:  podman compose down
+# Before first start, create the teacher login:  bash ../../scripts/make-teacher-password.sh <name>
+services:
+  fb-front:
+    image: docker.io/library/nginx:stable
+    container_name: fb-front
+    ports: ["8003:80"]
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro,Z
+    depends_on: [fb-main, fb-fallback]
+
+  fb-main:
+    build: ../../shared/backend
+    container_name: fb-main
+    environment: { NAME: fb-main }
+
+  fb-fallback:
+    image: docker.io/library/nginx:stable
+    container_name: fb-fallback
+    volumes:
+      - ./fallback/nginx.conf:/etc/nginx/nginx.conf:ro,Z
+      - ./fallback/index.html:/usr/share/nginx/html/index.html:ro,Z
+
+  status:
+    build: ../../shared/status-service
+    container_name: fb-status
+    environment:
+      CAPTION: "One main server and one spare page. When the main server stops, visitors see the spare page instead of an error."
+      TARGETS: '[{"name":"fb-front","url":"http://fb-front/front-health"},{"name":"fb-main","url":"http://fb-main:3000/health"},{"name":"fb-fallback","url":"http://fb-fallback/health"}]'
+      CONTROLLABLE: "fb-main"
+    volumes:
+      - ${XDG_RUNTIME_DIR:-/run/user/1000}/podman/podman.sock:/run/podman/podman.sock
+    security_opt: ["label=disable"]
+
+  gateway:
+    image: docker.io/library/nginx:stable
+    container_name: fb-gateway
+    ports: ["9003:80"]
+    volumes:
+      - ../../shared/gateway/nginx.conf:/etc/nginx/nginx.conf:ro,Z
+      - ../../shared/gateway/htpasswd:/etc/nginx/htpasswd:ro,Z
+    depends_on: [status]
