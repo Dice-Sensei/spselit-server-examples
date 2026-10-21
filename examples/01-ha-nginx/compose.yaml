@@ -1,0 +1,45 @@
+# Example 1: highly available website with nginx only.
+# Start:  podman compose up -d      Stop:  podman compose down
+# Before first start, create the teacher login:  bash ../../scripts/make-teacher-password.sh <name>
+services:
+  # The "front door": forwards, balances, caches. Visitors use port 8001.
+  front:
+    image: docker.io/library/nginx:stable
+    container_name: ha1-front
+    ports: ["8001:80"]
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro,Z
+      - ./down.html:/usr/share/nginx/html/down.html:ro,Z
+    depends_on: [ha1-back-a, ha1-back-b]
+
+  # Two identical back servers. Each says its own name so you can see who answered.
+  ha1-back-a:
+    build: ../../shared/backend
+    container_name: ha1-back-a
+    environment: { NAME: ha1-back-a }
+  ha1-back-b:
+    build: ../../shared/backend
+    container_name: ha1-back-b
+    environment: { NAME: ha1-back-b }
+
+  # The live page's data source. It may stop/start only the two back servers.
+  status:
+    build: ../../shared/status-service
+    container_name: ha1-status
+    environment:
+      CAPTION: "Visitors are shared between two servers. If one fails, the other takes over and the site stays up."
+      TARGETS: '[{"name":"ha1-front","url":"http://ha1-front/front-health"},{"name":"ha1-back-a","url":"http://ha1-back-a:3000/health"},{"name":"ha1-back-b","url":"http://ha1-back-b:3000/health"}]'
+      CONTROLLABLE: "ha1-back-a,ha1-back-b"
+    volumes:
+      - ${XDG_RUNTIME_DIR:-/run/user/1000}/podman/podman.sock:/run/podman/podman.sock
+    security_opt: ["label=disable"]
+
+  # Public live page on port 9001; teacher controls need the password.
+  gateway:
+    image: docker.io/library/nginx:stable
+    container_name: ha1-gateway
+    ports: ["9001:80"]
+    volumes:
+      - ../../shared/gateway/nginx.conf:/etc/nginx/nginx.conf:ro,Z
+      - ../../shared/gateway/htpasswd:/etc/nginx/htpasswd:ro,Z
+    depends_on: [status]

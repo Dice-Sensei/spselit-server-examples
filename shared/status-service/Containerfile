@@ -1,8 +1,10 @@
 # Small Node image; the service has no dependencies, so there is nothing to install.
 FROM docker.io/library/node:22-alpine
+# Runs as root inside the container on purpose: with rootless podman, "root" in the
+# container is just your own user on the host, which is the only user allowed to open
+# the podman socket. It is not root on the server.
 WORKDIR /app
 COPY probe.js podman.js server.js ./
 COPY public ./public
-USER node
 EXPOSE 3000
 CMD ["node", "server.js"]
