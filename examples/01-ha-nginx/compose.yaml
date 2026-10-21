@@ -14,17 +14,27 @@ services:
 
   # Two identical back servers. Each says its own name so you can see who answered.
   ha1-back-a:
-    build: ../../shared/backend
+    build: { context: ../../shared/backend, dockerfile: Containerfile }
     container_name: ha1-back-a
+    # Fixed address: nginx/HAProxy look names up only once at start, so a restarted
+    # container must come back with the SAME address to be found again.
+    networks:
+      default:
+        ipv4_address: 10.99.1.11
     environment: { NAME: ha1-back-a }
   ha1-back-b:
-    build: ../../shared/backend
+    build: { context: ../../shared/backend, dockerfile: Containerfile }
     container_name: ha1-back-b
+    # Fixed address: nginx/HAProxy look names up only once at start, so a restarted
+    # container must come back with the SAME address to be found again.
+    networks:
+      default:
+        ipv4_address: 10.99.1.12
     environment: { NAME: ha1-back-b }
 
   # The live page's data source. It may stop/start only the two back servers.
   status:
-    build: ../../shared/status-service
+    build: { context: ../../shared/status-service, dockerfile: Containerfile }
     container_name: ha1-status
     environment:
       CAPTION: "Visitors are shared between two servers. If one fails, the other takes over and the site stays up."
@@ -43,3 +53,9 @@ services:
       - ../../shared/gateway/nginx.conf:/etc/nginx/nginx.conf:ro,Z
       - ../../shared/gateway/htpasswd:/etc/nginx/htpasswd:ro,Z
     depends_on: [status]
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 10.99.1.0/24

@@ -78,4 +78,8 @@ if (require.main === module) {
   createApp(cfg).listen(Number(process.env.PORT || 3000), () => console.log('status service ready'));
 }
 
+// As the container's main process, Node ignores SIGTERM unless told otherwise, which would make
+// `podman stop` wait for its timeout. Exit promptly instead.
+process.on('SIGTERM', () => process.exit(0));
+
 module.exports = { createApp };

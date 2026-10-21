@@ -15,7 +15,7 @@ function controlContainer(name, action, allowed, socketPath) {
   }
   return new Promise((resolve) => {
     const req = http.request(
-      { socketPath, method: 'POST', path: `/v4.0.0/libpod/containers/${name}/${action}` },
+      { socketPath, method: 'POST', path: `/v4.0.0/libpod/containers/${name}/${action}${action === 'stop' ? '?timeout=2' : ''}` },
       (res) => {
         res.resume();
         // 204 = done, 304 = it was already in that state; both are fine.
@@ -25,7 +25,7 @@ function controlContainer(name, action, allowed, socketPath) {
       }
     );
     req.on('error', () => resolve({ ok: false, error: 'podman-unavailable' }));
-    req.setTimeout(10000, () => req.destroy());
+    req.setTimeout(15000, () => req.destroy());   // longer than podman's own stop timeout
     req.end();
   });
 }

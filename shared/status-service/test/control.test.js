@@ -44,6 +44,6 @@ for (const action of ['stop', 'start']) {
     const r = await controlContainer('db', action, ['db'], sock);
     server.close();
     assert.strictEqual(r.ok, true);
-    assert.deepStrictEqual(seen, [`POST /v4.0.0/libpod/containers/db/${action}`]);
+    assert.deepStrictEqual(seen, [action === 'stop' ? 'POST /v4.0.0/libpod/containers/db/stop?timeout=2' : 'POST /v4.0.0/libpod/containers/db/start']);
   });
 }

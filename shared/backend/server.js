@@ -24,4 +24,7 @@ if (require.main === module) {
   createBackend(name).listen(Number(process.env.PORT || 3000), () => console.log(`${name} ready`));
 }
 
+// Exit promptly on `podman stop` (Node as PID 1 ignores SIGTERM by default).
+process.on('SIGTERM', () => process.exit(0));
+
 module.exports = { createBackend };

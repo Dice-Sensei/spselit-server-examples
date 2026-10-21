@@ -13,6 +13,10 @@ need "podman installed"                    command -v podman
 need "podman compose available"            podman compose version
 need "podman user socket active"           systemctl --user is-active podman.socket
 
+need "podman socket file exists (live pages need it)" test -S "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/podman/podman.sock"
+need "openssl installed (teacher password script)" command -v openssl
+need "teacher login created (scripts/make-teacher-password.sh)" test -s "$(dirname "$0")/../shared/gateway/htpasswd"
+
 command -v podman >/dev/null 2>&1 && echo "podman version: $(podman --version)"
 podman compose version 2>/dev/null | head -1
 
