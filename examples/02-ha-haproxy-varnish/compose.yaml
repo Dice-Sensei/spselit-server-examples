@@ -1,0 +1,51 @@
+# Example 2: highly available website with Varnish (cache) + HAProxy (load balancer).
+# Start:  podman compose up -d      Stop:  podman compose down
+# Before first start, create the teacher login:  bash ../../scripts/make-teacher-password.sh <name>
+services:
+  # Layer 1: the cache. Visitors use port 8002.
+  ha2-varnish:
+    image: docker.io/library/varnish:stable
+    container_name: ha2-varnish
+    ports: ["8002:80"]
+    volumes:
+      - ./default.vcl:/etc/varnish/default.vcl:ro,Z
+    depends_on: [ha2-haproxy]
+
+  # Layer 2: the load balancer. Its statistics page is on port 8402.
+  ha2-haproxy:
+    image: docker.io/library/haproxy:lts-alpine
+    container_name: ha2-haproxy
+    ports: ["8402:8404"]
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro,Z
+      - ./down.http:/usr/local/etc/haproxy/down.http:ro,Z
+    depends_on: [ha2-back-a, ha2-back-b]
+
+  ha2-back-a:
+    build: ../../shared/backend
+    container_name: ha2-back-a
+    environment: { NAME: ha2-back-a }
+  ha2-back-b:
+    build: ../../shared/backend
+    container_name: ha2-back-b
+    environment: { NAME: ha2-back-b }
+
+  status:
+    build: ../../shared/status-service
+    container_name: ha2-status
+    environment:
+      CAPTION: "Visitors pass a cache first, then a load balancer that checks every second which servers are healthy."
+      TARGETS: '[{"name":"ha2-varnish","url":"http://ha2-varnish/front-health"},{"name":"ha2-haproxy","url":"http://ha2-haproxy:8080/haproxy-health"},{"name":"ha2-back-a","url":"http://ha2-back-a:3000/health"},{"name":"ha2-back-b","url":"http://ha2-back-b:3000/health"}]'
+      CONTROLLABLE: "ha2-back-a,ha2-back-b"
+    volumes:
+      - ${XDG_RUNTIME_DIR:-/run/user/1000}/podman/podman.sock:/run/podman/podman.sock
+    security_opt: ["label=disable"]
+
+  gateway:
+    image: docker.io/library/nginx:stable
+    container_name: ha2-gateway
+    ports: ["9002:80"]
+    volumes:
+      - ../../shared/gateway/nginx.conf:/etc/nginx/nginx.conf:ro,Z
+      - ../../shared/gateway/htpasswd:/etc/nginx/htpasswd:ro,Z
+    depends_on: [status]
