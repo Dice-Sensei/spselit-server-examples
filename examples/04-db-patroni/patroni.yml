@@ -12,7 +12,7 @@ restapi:
 
 bootstrap:                     # used once, by the very first node, to create the cluster
   dcs:
-    ttl: 15                    # the leader must renew its "lease" within 15 s or lose it
+    ttl: 20                    # the leader must renew its "lease" within 20 s or lose it (Patroni requires at least 20 with these loop settings)
     loop_wait: 5               # how often each node looks at the cluster
     retry_timeout: 5
     maximum_lag_on_failover: 1048576   # a replica too far behind may not become leader

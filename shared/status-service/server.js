@@ -31,21 +31,45 @@ function send(res, status, body, type = 'application/json') {
 }
 
 function createApp(cfg) {
+  // One probe round at a time, shared by every viewer and remembered for `cacheMs`.
+  // Why: when a container is stopped its name stops resolving, and each failed lookup can
+  // block one of Node's few DNS threads for many seconds. If every page view started its own
+  // round of probes, those stuck lookups would pile up, use all the threads, and make even the
+  // healthy servers look down.
+  const cacheMs = cfg.cacheMs ?? 1000;
+  let cached = null;
+  let cachedAt = 0;
+  let inflight = null;
+
+  async function probeRound() {
+    const [targets, controlsAvailable] = await Promise.all([
+      probeAll(cfg.targets, cfg.timeoutMs),
+      socketAvailable(cfg.socketPath),
+    ]);
+    const out = { caption: cfg.caption, targets, controlsAvailable, controllable: cfg.controllable };
+    // Database clusters: nodes that report a role but none is the writer means nobody can write.
+    const withRole = targets.filter((t) => t.role);
+    if (withRole.length > 0 && !withRole.some((t) => ['primary', 'master', 'leader'].includes(t.role))) {
+      out.warning = 'No leader: the database cannot accept writes right now.';
+    }
+    return out;
+  }
+
+  function snapshot() {
+    if (inflight) return inflight;
+    if (cached && Date.now() - cachedAt < cacheMs) return Promise.resolve(cached);
+    inflight = probeRound().then(
+      (r) => { cached = r; cachedAt = Date.now(); inflight = null; return r; },
+      (e) => { inflight = null; throw e; }
+    );
+    return inflight;
+  }
+
   return http.createServer(async (req, res) => {
     const pathname = req.url.split('?')[0];
 
     if (req.method === 'GET' && pathname === '/api/status') {
-      const [targets, controlsAvailable] = await Promise.all([
-        probeAll(cfg.targets, cfg.timeoutMs),
-        socketAvailable(cfg.socketPath),
-      ]);
-      const out = { caption: cfg.caption, targets, controlsAvailable, controllable: cfg.controllable };
-      // Database clusters: nodes that report a role but none is the writer means nobody can write.
-      const withRole = targets.filter((t) => t.role);
-      if (withRole.length > 0 && !withRole.some((t) => ['primary', 'master', 'leader'].includes(t.role))) {
-        out.warning = 'No leader: the database cannot accept writes right now.';
-      }
-      return send(res, 200, out);
+      return send(res, 200, await snapshot());
     }
 
     if (req.method === 'POST' && pathname === '/api/control') {

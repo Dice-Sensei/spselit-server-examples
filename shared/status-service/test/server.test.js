@@ -85,3 +85,26 @@ test('no warning for targets that report no roles (plain websites)', async () =>
   app.close();
   assert.strictEqual(body.warning, undefined);
 });
+
+test('concurrent and back-to-back status requests share one probe round', async () => {
+  let hits = 0;
+  const target = http.createServer((q, r) => { hits += 1; r.end('ok'); }).listen(0, '127.0.0.1');
+  await new Promise((r) => target.once('listening', r));
+  const app = await start({ cacheMs: 1000, targets: [{ name: 't', url: `http://127.0.0.1:${target.address().port}/` }] });
+  await Promise.all([1, 2, 3, 4, 5].map(() => fetch(url(app, '/api/status')).then((r) => r.json())));
+  await fetch(url(app, '/api/status')).then((r) => r.json());
+  app.close(); target.close();
+  assert.strictEqual(hits, 1);
+});
+
+test('a status request after the cache expires probes again', async () => {
+  let hits = 0;
+  const target = http.createServer((q, r) => { hits += 1; r.end('ok'); }).listen(0, '127.0.0.1');
+  await new Promise((r) => target.once('listening', r));
+  const app = await start({ cacheMs: 50, targets: [{ name: 't', url: `http://127.0.0.1:${target.address().port}/` }] });
+  await fetch(url(app, '/api/status')).then((r) => r.json());
+  await new Promise((r) => setTimeout(r, 120));
+  await fetch(url(app, '/api/status')).then((r) => r.json());
+  app.close(); target.close();
+  assert.strictEqual(hits, 2);
+});

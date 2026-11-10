@@ -6,5 +6,7 @@ FROM docker.io/library/node:22-alpine
 WORKDIR /app
 COPY probe.js podman.js server.js ./
 COPY public ./public
+# More threads for DNS lookups (Node uses 4 by default); see the comment in server.js.
+ENV UV_THREADPOOL_SIZE=64
 EXPOSE 3000
 CMD ["node", "server.js"]

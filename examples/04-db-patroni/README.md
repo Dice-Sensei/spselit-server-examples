@@ -23,7 +23,7 @@ flowchart LR
 
 - **PostgreSQL** is the database. There are three, `pat-pg1`, `pat-pg2`, `pat-pg3`.
 - **Patroni** runs next to each PostgreSQL. It keeps PostgreSQL running as leader or replica and talks to etcd.
-- **etcd** is the referee. The leader must keep renewing a short "lease" (15 seconds) in etcd. If it stops, the lease expires and the replicas race to take it; etcd lets exactly one win. This is how split brain is prevented.
+- **etcd** is the referee. The leader must keep renewing a short "lease" (20 seconds) in etcd. If it stops, the lease expires and the replicas race to take it; etcd lets exactly one win. This is how split brain is prevented.
 - **HAProxy** gives applications one address. It asks every node `GET /primary`; only the leader says yes, so applications always reach the leader without knowing which node it is.
 
 ## Try it (teachers)
