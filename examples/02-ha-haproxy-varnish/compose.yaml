@@ -6,7 +6,10 @@ services:
   ha2-varnish:
     image: docker.io/library/varnish:stable
     container_name: ha2-varnish
-    ports: ["8002:80"]
+    # Varnish runs as a normal user inside its container, and rootless podman does not let
+    # normal users open ports below 1024. So it listens on 8080 inside, and 8002 outside.
+    command: ["varnishd", "-F", "-f", "/etc/varnish/default.vcl", "-a", "http=:8080,HTTP", "-s", "malloc,128m"]
+    ports: ["8002:8080"]
     volumes:
       - ./default.vcl:/etc/varnish/default.vcl:ro,Z
     depends_on: [ha2-haproxy]
@@ -45,7 +48,7 @@ services:
     container_name: ha2-status
     environment:
       CAPTION: "Visitors pass a cache first, then a load balancer that checks every second which servers are healthy."
-      TARGETS: '[{"name":"ha2-varnish","url":"http://ha2-varnish/front-health"},{"name":"ha2-haproxy","url":"http://ha2-haproxy:8080/haproxy-health"},{"name":"ha2-back-a","url":"http://ha2-back-a:3000/health"},{"name":"ha2-back-b","url":"http://ha2-back-b:3000/health"}]'
+      TARGETS: '[{"name":"ha2-varnish","url":"http://ha2-varnish:8080/front-health"},{"name":"ha2-haproxy","url":"http://ha2-haproxy:8080/haproxy-health"},{"name":"ha2-back-a","url":"http://ha2-back-a:3000/health"},{"name":"ha2-back-b","url":"http://ha2-back-b:3000/health"}]'
       CONTROLLABLE: "ha2-back-a,ha2-back-b"
     volumes:
       - ${XDG_RUNTIME_DIR:-/run/user/1001}/podman/podman.sock:/run/podman/podman.sock
