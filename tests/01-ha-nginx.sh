@@ -25,7 +25,8 @@ echo "ok: failover"
 
 podman start ha1-back-a >/dev/null
 for i in $(seq 1 15); do
-  [ "$(servers_seen)" = "ha1-back-a ha1-back-b " ] && { echo "ok: restored server rejoined"; break; }
+  seen="$(servers_seen)"; echo "  t=${i}s servers answering: ${seen:-none}"
+  [ "$seen" = "ha1-back-a ha1-back-b " ] && { echo "ok: restored server rejoined"; break; }
   [ "$i" = 15 ] && { echo "FAIL: back-a did not rejoin within 15 s"; exit 1; }
   sleep 1
 done
