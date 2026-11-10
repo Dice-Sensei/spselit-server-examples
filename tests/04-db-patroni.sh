@@ -16,6 +16,9 @@ leaders() { status | grep -oP '"name":"pat-pg\d"[^}]*"role":"(primary|master)"' 
 sql() { podman exec -e PGPASSWORD=postgres "$1" psql -h pat-haproxy -U postgres -tAc "$2"; }
 wait_leader() { for i in $(seq 1 "$1"); do [ "$(leaders | wc -l)" = 1 ] && return 0; sleep 1; done; echo "FAIL: expected exactly one leader within $1 s"; exit 1; }
 
+# wait_new_leader <old> <seconds>: print the name of the single leader once it differs from <old>.
+wait_new_leader() { local i l; for i in $(seq 1 "$2"); do l=$(leaders); [ "$(echo "$l" | grep -c .)" = 1 ] && [ "$l" != "$1" ] && { echo "$l"; return 0; }; sleep 1; done; echo "FAIL: no new leader within $2 s" >&2; return 1; }
+
 wait_leader 120
 OLD=$(leaders)
 echo "ok: leader is $OLD"
@@ -26,9 +29,7 @@ for i in $(seq 1 30); do sql "$OTHER" "create table if not exists t(x int); inse
 echo "ok: write through the single address"
 
 podman stop "$OLD" >/dev/null
-wait_leader 60
-NEW=$(leaders)
-[ "$NEW" != "$OLD" ] || { echo "FAIL: leader should change"; exit 1; }
+NEW=$(wait_new_leader "$OLD" 90) || exit 1
 for i in $(seq 1 30); do sql "$NEW" "insert into t values (2)" >/dev/null 2>&1 && break; sleep 2; done
 [ "$(sql "$NEW" "select count(*) from t")" = 2 ] || { echo "FAIL: old row must survive and new writes must work"; exit 1; }
 echo "ok: failover to $NEW, data intact, writes work"
