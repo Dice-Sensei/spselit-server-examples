@@ -20,6 +20,9 @@ wait_leader() { for i in $(seq 1 "$1"); do [ "$(leaders | wc -l)" = 1 ] && retur
 wait_new_leader() { local i l; for i in $(seq 1 "$2"); do l=$(leaders); [ "$(echo "$l" | grep -c .)" = 1 ] && [ "$l" != "$1" ] && { echo "$l"; return 0; }; [ $((i % 10)) = 0 ] && echo "  t=${i}s leaders seen: [$(echo $l)]" >&2; sleep 1; done; echo "FAIL: no new leader within $2 s" >&2; return 1; }
 
 wait_leader 120
+# A replica can only take over once it has caught up (streaming). Right after creation they are still copying data.
+for i in $(seq 1 180); do [ "$(status | grep -o '"replication_state":"streaming"' | wc -l)" = 2 ] && break; [ "$i" = 180 ] && { echo "FAIL: both replicas should be streaming within 180 s"; exit 1; }; sleep 1; done
+echo "ok: both replicas are streaming"
 OLD=$(leaders)
 echo "ok: leader is $OLD"
 OTHER=$(for n in pat-pg1 pat-pg2 pat-pg3; do [ "$n" != "$OLD" ] && echo $n; done | head -1)
