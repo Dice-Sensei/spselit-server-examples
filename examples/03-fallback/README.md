@@ -25,7 +25,7 @@ cd examples/03-fallback
 podman compose up -d
 ```
 
-- Site: `http://<server>:8003`. Live page: `http://<server>:9003`. Teacher buttons: `http://<server>:9003/teacher/`.
+- Site: `http://192.168.30.1:8003`. Live page: `http://192.168.30.1:9003`. Teacher buttons: `http://192.168.30.1:9003/teacher/`.
 - **Stop** `fb-main`, refresh the site: the maintenance page. **Start** it: the real site returns.
 
 ## The code

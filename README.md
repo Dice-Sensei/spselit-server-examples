@@ -21,7 +21,7 @@ Every example has three layers. Stop at the layer that suits you.
 | `examples/03-fallback` | A "we're down" page that appears automatically | 8003 | 9003 |
 | `examples/04-db-patroni` | A database that elects a new leader when one dies (Patroni) | 5001 | 9004 |
 
-The servers are reachable on the school network only. Students watch the live page; teachers log in to break and restore parts.
+The server is 192.168.30.1 on the school network (192.168.30.0/24); nothing is published outside it. For example, the live page of example 1 is `http://192.168.30.1:9001`. Students watch the live page; teachers log in to break and restore parts.
 
 ## Running an example (teachers)
 
@@ -46,6 +46,8 @@ Everything runs rootless under one account on the server: **Dice-Sensei** (user 
 3. **Demo:** open the example's live page on the projector and `/teacher/` on your own screen, then press **Stop** on a server. Students watch the picture change; the site keeps working.
 4. **Reset:** press **Start** on everything that is red. If a start does not help: `podman compose down && podman compose up -d` in the example folder.
 5. **Checks after updating:** `bash tests/01-ha-nginx.sh` (and the same for 02, 03, 04). Each prints `all checks passed`.
+
+If the server has a firewall (ufw), allow the published ports from the school network only, for example `sudo ufw allow from 192.168.30.0/24 to any port 8001:8003,9001:9004,8402,5001 proto tcp`.
 
 Students see only the public page, which cannot stop or start anything.
 

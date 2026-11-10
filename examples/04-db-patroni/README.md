@@ -34,7 +34,7 @@ cd examples/04-db-patroni
 podman compose up -d --build                    # first start takes about a minute
 ```
 
-- Live page: `http://<server>:9004`. Teacher buttons: `http://<server>:9004/teacher/`. Database address for applications: `<server>:5001` (demo login `postgres` / `postgres`).
+- Live page: `http://192.168.30.1:9004`. Teacher buttons: `http://192.168.30.1:9004/teacher/`. Database address for applications: `192.168.30.1:5001` (demo login `postgres` / `postgres`).
 - **Stop the leader.** After about 15–20 seconds another node becomes leader. Connections through port 5001 work again. **Start** the old one: it comes back as a replica.
 - **Stop two database nodes.** The last one becomes leader on its own: no majority of database nodes is needed, only etcd.
 - **Stop `pat-etcd`.** The live page shows "No leader". The leader steps down to read-only, because without the referee it cannot prove it is still the only leader. Start etcd again and a leader returns. Safety was chosen over availability, deliberately.

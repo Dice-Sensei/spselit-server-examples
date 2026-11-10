@@ -28,8 +28,8 @@ cd examples/02-ha-haproxy-varnish
 podman compose up -d
 ```
 
-- Site: `http://<server>:8002`. Live page: `http://<server>:9002`. Teacher buttons: `http://<server>:9002/teacher/`.
-- HAProxy's own statistics page: `http://<server>:8402`. Stop a back server and watch its row turn red.
+- Site: `http://192.168.30.1:8002`. Live page: `http://192.168.30.1:9002`. Teacher buttons: `http://192.168.30.1:9002/teacher/`.
+- HAProxy's own statistics page: `http://192.168.30.1:8402`. Stop a back server and watch its row turn red.
 - The response header `X-Cache` is `MISS` the first time and `HIT` afterwards.
 
 ## The code

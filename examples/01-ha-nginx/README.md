@@ -32,8 +32,8 @@ cd examples/01-ha-nginx
 podman compose up -d
 ```
 
-- Students open the live page `http://<server>:9001` and the site `http://<server>:8001`.
-- Teachers open `http://<server>:9001/teacher/` and log in. Press **Stop** on `ha1-back-a`. Refresh the site: it still works, and the answers now say `ha1-back-b`.
+- Students open the live page `http://192.168.30.1:9001` and the site `http://192.168.30.1:8001`.
+- Teachers open `http://192.168.30.1:9001/teacher/` and log in. Press **Stop** on `ha1-back-a`. Refresh the site: it still works, and the answers now say `ha1-back-b`.
 - Press **Stop** on both. The friendly page appears. Press **Start** and the site comes back by itself.
 - Look at the response header `X-Cache-Status` of the site: `MISS` the first time, `HIT` on the next requests.
 
