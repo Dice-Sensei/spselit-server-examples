@@ -45,7 +45,8 @@ Everything runs rootless under one account on the server: **Dice-Sensei** (user 
 2. **Enable the podman socket** (needed for the Stop/Start buttons): `systemctl --user enable --now podman.socket`. Also run `sudo loginctl enable-linger Dice-Sensei` once, so the socket and containers keep running after you log out. `scripts/check-server.sh` tells you if anything is missing.
 3. **Demo:** open the example's live page on the projector and `/teacher/` on your own screen, then press **Stop** on a server. Students watch the picture change; the site keeps working.
 4. **Reset:** press **Start** on everything that is red. If a start does not help: `podman compose down && podman compose up -d` in the example folder.
-5. **Checks after updating:** `bash tests/01-ha-nginx.sh` (and the same for 02, 03, 04). Each prints `all checks passed`.
+5. **After `git pull`, recreate the examples you run:** `cd examples/NN-name && podman compose down && podman compose up -d --build`. A plain `up -d --build` rebuilds the images but keeps the old containers running, so you would still see the old behaviour.
+6. **Checks after updating:** `bash tests/01-ha-nginx.sh` (and the same for 02, 03, 04). Each prints `all checks passed`.
 
 If the server has a firewall (ufw), allow the published ports from the school network only, for example `sudo ufw allow from 192.168.30.0/24 to any port 8001:8003,9001:9004,8402,5001 proto tcp`.
 
