@@ -48,7 +48,7 @@ services:
       TARGETS: '[{"name":"ha2-varnish","url":"http://ha2-varnish/front-health"},{"name":"ha2-haproxy","url":"http://ha2-haproxy:8080/haproxy-health"},{"name":"ha2-back-a","url":"http://ha2-back-a:3000/health"},{"name":"ha2-back-b","url":"http://ha2-back-b:3000/health"}]'
       CONTROLLABLE: "ha2-back-a,ha2-back-b"
     volumes:
-      - ${XDG_RUNTIME_DIR:-/run/user/1000}/podman/podman.sock:/run/podman/podman.sock
+      - ${XDG_RUNTIME_DIR:-/run/user/1001}/podman/podman.sock:/run/podman/podman.sock
     security_opt: ["label=disable"]
 
   gateway:

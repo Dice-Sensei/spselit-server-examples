@@ -40,7 +40,7 @@ services:
       TARGETS: '[{"name":"fb-front","url":"http://fb-front/front-health"},{"name":"fb-main","url":"http://fb-main:3000/health"},{"name":"fb-fallback","url":"http://fb-fallback/health"}]'
       CONTROLLABLE: "fb-main"
     volumes:
-      - ${XDG_RUNTIME_DIR:-/run/user/1000}/podman/podman.sock:/run/podman/podman.sock
+      - ${XDG_RUNTIME_DIR:-/run/user/1001}/podman/podman.sock:/run/podman/podman.sock
     security_opt: ["label=disable"]
 
   gateway:

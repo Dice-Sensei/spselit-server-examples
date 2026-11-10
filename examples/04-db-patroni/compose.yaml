@@ -70,7 +70,7 @@ services:
       TARGETS: '[{"name":"pat-etcd","url":"http://pat-etcd:2379/health"},{"name":"pat-pg1","url":"http://pat-pg1:8008/patroni"},{"name":"pat-pg2","url":"http://pat-pg2:8008/patroni"},{"name":"pat-pg3","url":"http://pat-pg3:8008/patroni"}]'
       CONTROLLABLE: "pat-etcd,pat-pg1,pat-pg2,pat-pg3"
     volumes:
-      - ${XDG_RUNTIME_DIR:-/run/user/1000}/podman/podman.sock:/run/podman/podman.sock
+      - ${XDG_RUNTIME_DIR:-/run/user/1001}/podman/podman.sock:/run/podman/podman.sock
     security_opt: ["label=disable"]
 
   gateway:

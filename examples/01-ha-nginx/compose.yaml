@@ -41,7 +41,7 @@ services:
       TARGETS: '[{"name":"ha1-front","url":"http://ha1-front/front-health"},{"name":"ha1-back-a","url":"http://ha1-back-a:3000/health"},{"name":"ha1-back-b","url":"http://ha1-back-b:3000/health"}]'
       CONTROLLABLE: "ha1-back-a,ha1-back-b"
     volumes:
-      - ${XDG_RUNTIME_DIR:-/run/user/1000}/podman/podman.sock:/run/podman/podman.sock
+      - ${XDG_RUNTIME_DIR:-/run/user/1001}/podman/podman.sock:/run/podman/podman.sock
     security_opt: ["label=disable"]
 
   # Public live page on port 9001; teacher controls need the password.
