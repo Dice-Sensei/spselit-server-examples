@@ -54,3 +54,50 @@ test('a JSON answer with a role passes role and lag through', async () => {
   assert.strictEqual(r.role, 'replica');
   assert.strictEqual(r.lag, 0);
 });
+
+test('every probe opens a fresh connection (no reuse of old ones)', async () => {
+  let connections = 0;
+  const s = http.createServer((req, res) => res.end('ok'));
+  s.on('connection', () => { connections += 1; });
+  await new Promise((r) => s.listen(0, '127.0.0.1', r));
+  const target = { name: 'k', url: `http://127.0.0.1:${s.address().port}/` };
+  await probeAll([target], 1000);
+  await probeAll([target], 1000);
+  s.closeAllConnections();
+  s.close();
+  assert.strictEqual(connections, 2);
+});
+
+test('a target that was down and comes back on the same port is seen up again', async () => {
+  const first = await listen((req, res) => res.end('ok'));
+  const port = first.address().port;
+  const target = { name: 'r', url: `http://127.0.0.1:${port}/` };
+  assert.strictEqual((await probeAll([target], 500))[0].up, true);
+  first.closeAllConnections();
+  await new Promise((r) => first.close(r));
+  assert.strictEqual((await probeAll([target], 500))[0].up, false);
+  const second = await new Promise((resolve) => {
+    const s = http.createServer((req, res) => res.end('ok')).listen(port, '127.0.0.1', () => resolve(s));
+  });
+  const after = await probeAll([target], 500);
+  second.close();
+  assert.strictEqual(after[0].up, true);
+});
+
+test('a down target says why: refused, timeout, or the HTTP status', async () => {
+  const closed = await listen((req, res) => res.end('ok'));
+  const port = closed.address().port;
+  await new Promise((r) => closed.close(r));
+  const refused = (await probeAll([{ name: 'a', url: `http://127.0.0.1:${port}/` }], 500))[0];
+  assert.match(refused.error, /ECONNREFUSED/);
+
+  const hang = await listen(() => {});
+  const slow = (await probeAll([{ name: 'b', url: `http://127.0.0.1:${hang.address().port}/` }], 200))[0];
+  hang.closeAllConnections(); hang.close();
+  assert.strictEqual(slow.error, 'timeout');
+
+  const bad = await listen((req, res) => { res.statusCode = 503; res.end('no'); });
+  const status = (await probeAll([{ name: 'c', url: `http://127.0.0.1:${bad.address().port}/` }], 500))[0];
+  bad.close();
+  assert.strictEqual(status.error, 'HTTP 503');
+});

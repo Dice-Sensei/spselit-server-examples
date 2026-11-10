@@ -5,7 +5,10 @@ async function probeOne(target, timeoutMs) {
   const start = Date.now();
   try {
     const res = await fetch(target.url, { signal: AbortSignal.timeout(timeoutMs) });
-    if (!res.ok) return { name: target.name, up: false, ms: null };
+    if (!res.ok) {
+      await res.body?.cancel();   // free the connection instead of leaving the body unread
+      return { name: target.name, up: false, ms: null, error: `HTTP ${res.status}` };
+    }
     const result = { name: target.name, up: true, ms: Date.now() - start };
     // Some targets (for example Patroni) answer with JSON describing themselves.
     // If it names a role, pass the interesting parts through to the live page.
@@ -16,10 +19,15 @@ async function probeOne(target, timeoutMs) {
         if ('lag' in body) result.lag = body.lag;
         if (typeof body.replication_state === 'string') result.replication_state = body.replication_state;
       }
+    } else {
+      await res.body?.cancel();
     }
     return result;
-  } catch {
-    return { name: target.name, up: false, ms: null };
+  } catch (e) {
+    // Say WHY it is down, so the page (and anyone debugging) can tell a stopped server
+    // (connection refused) from a slow one (timeout) or an unreachable one.
+    const why = e.name === 'TimeoutError' ? 'timeout' : (e.cause && (e.cause.code || e.cause.message)) || e.message;
+    return { name: target.name, up: false, ms: null, error: String(why) };
   }
 }
 
