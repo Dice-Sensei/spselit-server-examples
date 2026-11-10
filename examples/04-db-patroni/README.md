@@ -35,7 +35,7 @@ podman compose up -d --build                    # first start takes about a minu
 ```
 
 - Live page: `http://192.168.30.1:9004`. Teacher buttons: `http://192.168.30.1:9004/teacher/`. Database address for applications: `192.168.30.1:5001` (demo login `postgres` / `postgres`).
-- **Stop the leader.** Another node becomes leader within a few seconds (the stopped leader hands over politely; after a real crash it takes about 20 seconds, the length of the lease). Connections through port 5001 work again. **Start** the old one: it comes back as a replica.
+- **Stop the leader.** Another node becomes leader within a few seconds (the stopped leader hands over politely; after a real crash it takes about 20 seconds, the length of the lease). For a few more seconds HAProxy may still send a connection to the dead node, so applications should retry a failed connection once or twice; then connections through port 5001 work again. **Start** the old one: it comes back as a replica.
 - **Stop two database nodes.** The last one becomes leader on its own: no majority of database nodes is needed, only etcd.
 - **Stop `pat-etcd`.** The live page shows "No leader". The leader steps down to read-only, because without the referee it cannot prove it is still the only leader. Start etcd again and a leader returns. Safety was chosen over availability, deliberately.
 

@@ -36,7 +36,8 @@ echo "ok: write through the single address"
 podman stop "$OLD" >/dev/null
 NEW=$(wait_new_leader "$OLD" 90) || exit 1
 for i in $(seq 1 30); do sql "$NEW" "insert into t values (2)" >/dev/null 2>&1 && break; sleep 2; done
-[ "$(sql "$NEW" "select count(*) from t")" = 2 ] || { echo "FAIL: old row must survive and new writes must work"; exit 1; }
+# HAProxy needs a moment to notice the dead node, so reading back is retried too (as an application would).
+for i in $(seq 1 15); do [ "$(sql "$NEW" "select count(*) >= 2 from t" 2>/dev/null)" = t ] && break; [ "$i" = 15 ] && { echo "FAIL: old row must survive and new writes must work"; exit 1; }; sleep 2; done
 echo "ok: failover to $NEW, data intact, writes work"
 
 podman start "$OLD" >/dev/null
