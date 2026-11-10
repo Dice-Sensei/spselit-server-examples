@@ -17,7 +17,7 @@ sql() { podman exec -e PGPASSWORD=postgres "$1" psql -h pat-haproxy -U postgres 
 wait_leader() { for i in $(seq 1 "$1"); do [ "$(leaders | wc -l)" = 1 ] && return 0; sleep 1; done; echo "FAIL: expected exactly one leader within $1 s"; exit 1; }
 
 # wait_new_leader <old> <seconds>: print the name of the single leader once it differs from <old>.
-wait_new_leader() { local i l; for i in $(seq 1 "$2"); do l=$(leaders); [ "$(echo "$l" | grep -c .)" = 1 ] && [ "$l" != "$1" ] && { echo "$l"; return 0; }; sleep 1; done; echo "FAIL: no new leader within $2 s" >&2; return 1; }
+wait_new_leader() { local i l; for i in $(seq 1 "$2"); do l=$(leaders); [ "$(echo "$l" | grep -c .)" = 1 ] && [ "$l" != "$1" ] && { echo "$l"; return 0; }; [ $((i % 10)) = 0 ] && echo "  t=${i}s leaders seen: [$(echo $l)]" >&2; sleep 1; done; echo "FAIL: no new leader within $2 s" >&2; return 1; }
 
 wait_leader 120
 OLD=$(leaders)
