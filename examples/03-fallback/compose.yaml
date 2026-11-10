@@ -13,8 +13,10 @@ services:
   fb-main:
     build: { context: ../../shared/backend, dockerfile: Containerfile }
     container_name: fb-main
-    # Fixed address: nginx/HAProxy look names up only once at start, so a restarted
-    # container must come back with the SAME address to be found again.
+    # Fixed IP and MAC address. nginx/HAProxy look names up only once at start, and other
+    # containers remember a neighbour's MAC for ~35 s; a restarted container with a new
+    # address would be unreachable for that long. Same IP + same MAC = rejoins at once.
+    mac_address: "02:00:0a:63:03:0b"
     networks:
       default:
         ipv4_address: 10.99.3.11
@@ -23,8 +25,10 @@ services:
   fb-fallback:
     image: docker.io/library/nginx:stable
     container_name: fb-fallback
-    # Fixed address: nginx/HAProxy look names up only once at start, so a restarted
-    # container must come back with the SAME address to be found again.
+    # Fixed IP and MAC address. nginx/HAProxy look names up only once at start, and other
+    # containers remember a neighbour's MAC for ~35 s; a restarted container with a new
+    # address would be unreachable for that long. Same IP + same MAC = rejoins at once.
+    mac_address: "02:00:0a:63:03:0c"
     networks:
       default:
         ipv4_address: 10.99.3.12

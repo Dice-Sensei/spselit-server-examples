@@ -27,8 +27,10 @@ services:
   ha2-back-a:
     build: { context: ../../shared/backend, dockerfile: Containerfile }
     container_name: ha2-back-a
-    # Fixed address: nginx/HAProxy look names up only once at start, so a restarted
-    # container must come back with the SAME address to be found again.
+    # Fixed IP and MAC address. nginx/HAProxy look names up only once at start, and other
+    # containers remember a neighbour's MAC for ~35 s; a restarted container with a new
+    # address would be unreachable for that long. Same IP + same MAC = rejoins at once.
+    mac_address: "02:00:0a:63:02:0b"
     networks:
       default:
         ipv4_address: 10.99.2.11
@@ -36,8 +38,10 @@ services:
   ha2-back-b:
     build: { context: ../../shared/backend, dockerfile: Containerfile }
     container_name: ha2-back-b
-    # Fixed address: nginx/HAProxy look names up only once at start, so a restarted
-    # container must come back with the SAME address to be found again.
+    # Fixed IP and MAC address. nginx/HAProxy look names up only once at start, and other
+    # containers remember a neighbour's MAC for ~35 s; a restarted container with a new
+    # address would be unreachable for that long. Same IP + same MAC = rejoins at once.
+    mac_address: "02:00:0a:63:02:0c"
     networks:
       default:
         ipv4_address: 10.99.2.12
