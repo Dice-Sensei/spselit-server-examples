@@ -75,9 +75,12 @@ services:
       CAPTION: "Three copies of one database. One is the leader and takes the writes; the others follow it. If the leader dies, the others agree on a new one."
       TARGETS: '[{"name":"pat-etcd","url":"http://pat-etcd:2379/health"},{"name":"pat-pg1","url":"http://pat-pg1:8008/patroni"},{"name":"pat-pg2","url":"http://pat-pg2:8008/patroni"},{"name":"pat-pg3","url":"http://pat-pg3:8008/patroni"}]'
       CONTROLLABLE: "pat-etcd,pat-pg1,pat-pg2,pat-pg3"
+      INFO_FILE: "/example/info.json"
     volumes:
       - ${XDG_RUNTIME_DIR:-/run/user/1001}/podman/podman.sock:/run/podman/podman.sock
-      - ./info.json:/app/info.json:ro
+      # The whole example folder (read-only), not just info.json: git replaces files on
+      # `git pull`, and a single-file mount would keep showing the old file.
+      - .:/example:ro
     security_opt: ["label=disable"]
 
   gateway:

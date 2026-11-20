@@ -43,9 +43,12 @@ services:
       CAPTION: "One main server and one spare page. When the main server stops, visitors see the spare page instead of an error."
       TARGETS: '[{"name":"fb-front","url":"http://fb-front/front-health"},{"name":"fb-main","url":"http://fb-main:3000/health"},{"name":"fb-fallback","url":"http://fb-fallback/health"}]'
       CONTROLLABLE: "fb-main"
+      INFO_FILE: "/example/info.json"
     volumes:
       - ${XDG_RUNTIME_DIR:-/run/user/1001}/podman/podman.sock:/run/podman/podman.sock
-      - ./info.json:/app/info.json:ro
+      # The whole example folder (read-only), not just info.json: git replaces files on
+      # `git pull`, and a single-file mount would keep showing the old file.
+      - .:/example:ro
     security_opt: ["label=disable"]
 
   gateway:

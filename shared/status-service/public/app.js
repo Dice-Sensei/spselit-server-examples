@@ -41,8 +41,8 @@ async function refresh() {
   try {
     const data = await (await fetch('/api/status')).json();
     const info = data.info || {};
-    document.getElementById('title').textContent = info.title || defaultTitle;
-    document.getElementById('about').textContent = info.about || data.caption || '';
+    document.getElementById('title').textContent = (typeof info.title === 'string' && info.title) || defaultTitle;
+    document.getElementById('about').textContent = (typeof info.about === 'string' && info.about) || data.caption || '';
     const hint = document.getElementById('tryThis');
     if (hint) {
       hint.textContent = info.tryThis ? 'Try this: ' + info.tryThis : '';

@@ -54,9 +54,12 @@ services:
       CAPTION: "Visitors pass a cache first, then a load balancer that checks every second which servers are healthy."
       TARGETS: '[{"name":"ha2-varnish","url":"http://ha2-varnish:8080/front-health"},{"name":"ha2-haproxy","url":"http://ha2-haproxy:8080/haproxy-health"},{"name":"ha2-back-a","url":"http://ha2-back-a:3000/health"},{"name":"ha2-back-b","url":"http://ha2-back-b:3000/health"}]'
       CONTROLLABLE: "ha2-back-a,ha2-back-b"
+      INFO_FILE: "/example/info.json"
     volumes:
       - ${XDG_RUNTIME_DIR:-/run/user/1001}/podman/podman.sock:/run/podman/podman.sock
-      - ./info.json:/app/info.json:ro
+      # The whole example folder (read-only), not just info.json: git replaces files on
+      # `git pull`, and a single-file mount would keep showing the old file.
+      - .:/example:ro
     security_opt: ["label=disable"]
 
   gateway:

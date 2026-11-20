@@ -35,7 +35,7 @@ Updates reach the server by hand: `git pull` in the folder where this repo is cl
 
 ## Editing the live page text
 
-Each example has an `info.json` next to its `compose.yaml`. It holds the plain-words text students see on the live page: `title`, `about` (what this is and why it matters), `roles` (one sentence per box, keyed by the container name from `TARGETS`) and `tryThis` (a hint shown only on the teacher page). All fields are optional; without the file the page falls back to the `CAPTION` line. The file is mounted read-only into the status service and read on every refresh, so a text edit shows after a `git pull` and a browser refresh. Only the first time (to add the mount) do you need `podman compose down && podman compose up -d --build`.
+Each example has an `info.json` next to its `compose.yaml`. It holds the plain-words text students see on the live page: `title`, `about` (what this is and why it matters), `roles` (one sentence per box, keyed by the container name from `TARGETS`) and `tryThis` (a hint shown only on the teacher page). All fields are optional; without the file the page falls back to the `CAPTION` line. The example folder is mounted read-only into the status service (the whole folder, so a `git pull` that replaces the file is still seen) and `info.json` is read on every refresh: after a `git pull`, a browser refresh shows the new text. Only the first time, to add the mount, recreate the containers (`podman compose down && podman compose up -d --build`). If you remove `info.json`, the page falls back to the `CAPTION` line.
 
 ## Round two (ideas, not built yet)
 

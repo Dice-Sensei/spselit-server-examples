@@ -44,9 +44,12 @@ services:
       CAPTION: "Visitors are shared between two servers. If one fails, the other takes over and the site stays up."
       TARGETS: '[{"name":"ha1-front","url":"http://ha1-front/front-health"},{"name":"ha1-back-a","url":"http://ha1-back-a:3000/health"},{"name":"ha1-back-b","url":"http://ha1-back-b:3000/health"}]'
       CONTROLLABLE: "ha1-back-a,ha1-back-b"
+      INFO_FILE: "/example/info.json"
     volumes:
       - ${XDG_RUNTIME_DIR:-/run/user/1001}/podman/podman.sock:/run/podman/podman.sock
-      - ./info.json:/app/info.json:ro
+      # The whole example folder (read-only), not just info.json: git replaces files on
+      # `git pull`, and a single-file mount would keep showing the old file.
+      - .:/example:ro
     security_opt: ["label=disable"]
 
   # Public live page on port 9001; teacher controls need the password.
