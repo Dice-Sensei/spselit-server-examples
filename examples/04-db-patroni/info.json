@@ -1,0 +1,11 @@
+{
+  "title": "A database that picks a new leader when one dies",
+  "about": "A shop's orders live in a database. Here there are three copies. One is the leader and accepts changes; the others copy everything it does. If the leader dies, the copies agree on a new leader and no orders are lost.",
+  "tryThis": "Stop the box marked leader. Within about 30 seconds another one becomes leader. Then stop pat-etcd and see why the page warns that there is no leader.",
+  "roles": {
+    "pat-etcd": "The referee. It decides who the leader is, so two copies never both think they are in charge.",
+    "pat-pg1": "A copy of the database. It is either the leader or a replica that follows the leader.",
+    "pat-pg2": "A second copy of the database, with the same job as the first.",
+    "pat-pg3": "A third copy of the database. With three copies, losing one is not a problem."
+  }
+}

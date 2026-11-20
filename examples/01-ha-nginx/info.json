@@ -1,0 +1,10 @@
+{
+  "title": "A website that survives a server dying",
+  "about": "A shop's website on one computer is closed the moment that computer breaks. Here the same site runs on two computers, with a front door that sends each visitor to one that works. Watch what happens when one of them stops: visitors do not notice.",
+  "tryThis": "Stop ha1-back-a, then refresh the site on port 8001. It still works. Start it again and both servers share the visitors once more.",
+  "roles": {
+    "ha1-front": "The front door. Every visitor arrives here and is sent to a server that works.",
+    "ha1-back-a": "One of two identical web servers that build the page.",
+    "ha1-back-b": "The second identical web server. It takes over when the first one is gone."
+  }
+}

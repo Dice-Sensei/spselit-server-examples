@@ -1,0 +1,42 @@
+/* Shared look for the live page and the teacher page. Big type and strong contrast so it
+   reads from the back of a classroom. Colour is never the only signal: each box also says
+   UP or DOWN in words. */
+:root {
+  --bg: #f4f6f8; --card: #fff; --text: #14202b; --muted: #4a5b6a; --line: #c5ced6;
+  --up: #1b6e2f; --up-bg: #e3f4e7; --down: #b3261e; --down-bg: #fdeceb;
+  --accent: #1d4e89; --warn: #7a5600;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101820; --card: #1a2630; --text: #eef2f5; --muted: #a9b8c4; --line: #3a4b59;
+    --up: #6fdc8c; --up-bg: #14301c; --down: #ff8a80; --down-bg: #3a1a18;
+    --accent: #8ab8f0; --warn: #f2c14e;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 1.125rem/1.5 system-ui, sans-serif; }
+main { max-width: 64rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+header { border-bottom: 3px solid var(--accent); padding-bottom: .75rem; margin-bottom: 1.25rem; }
+h1 { margin: 0; font-size: 2rem; line-height: 1.2; }
+.badge { display: inline-block; margin-top: .4rem; padding: .1rem .6rem; border-radius: 99px;
+  background: var(--accent); color: var(--bg); font-size: .85rem; font-weight: 600; }
+#about { font-size: 1.2rem; max-width: 50rem; }
+#legend { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; color: var(--muted); font-size: 1rem; margin: 1rem 0; }
+.dot { display: inline-block; width: .9em; height: .9em; border-radius: 50%; margin-right: .4em; vertical-align: -.1em; }
+.dot.up { background: var(--up); } .dot.down { background: var(--down); }
+#targets { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; margin: 1rem 0; }
+.box { background: var(--card); border: 2px solid var(--line); border-left-width: 10px; border-radius: 10px;
+  padding: .9rem 1rem; display: flex; flex-direction: column; gap: .35rem; }
+.box.up { border-color: var(--up); background: var(--up-bg); }
+.box.down { border-color: var(--down); background: var(--down-bg); }
+.box strong { font-size: 1.2rem; overflow-wrap: anywhere; }
+.status { font-weight: 700; }
+.box.up .status { color: var(--up); } .box.down .status { color: var(--down); }
+.role { margin: 0; color: var(--muted); font-size: 1rem; }
+button { align-self: flex-start; margin-top: .3rem; font: inherit; font-weight: 600; padding: .35rem 1.1rem;
+  border-radius: 8px; border: 2px solid var(--accent); background: var(--card); color: var(--accent); cursor: pointer; }
+button:hover { background: var(--accent); color: var(--bg); }
+#tryThis { border-left: 6px solid var(--accent); background: var(--card); padding: .6rem 1rem; border-radius: 6px; }
+#tryThis[hidden] { display: none; }
+#warning { color: var(--down); font-weight: 700; }
+#note { color: var(--warn); }

@@ -1,0 +1,19 @@
+# One image for all three database nodes: PostgreSQL (from the official image) plus Patroni.
+# Patroni is a Python program that starts PostgreSQL itself and decides, together with etcd,
+# which node is the leader.
+FROM docker.io/library/postgres:16
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 python3-venv curl \
+ && rm -rf /var/lib/apt/lists/* \
+ && python3 -m venv /opt/patroni \
+ && /opt/patroni/bin/pip install --no-cache-dir "patroni[etcd3]>=4,<5" psycopg2-binary
+
+# Where this node keeps its data. Patroni creates and manages it.
+RUN mkdir -p /home/postgres/data && chown -R postgres:postgres /home/postgres && chmod 700 /home/postgres/data
+
+COPY patroni.yml /etc/patroni.yml
+
+# Patroni refuses to run as root, so run as the "postgres" user.
+USER postgres
+ENTRYPOINT ["/opt/patroni/bin/patroni", "/etc/patroni.yml"]
