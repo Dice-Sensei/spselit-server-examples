@@ -77,6 +77,7 @@ services:
       CONTROLLABLE: "pat-etcd,pat-pg1,pat-pg2,pat-pg3"
     volumes:
       - ${XDG_RUNTIME_DIR:-/run/user/1001}/podman/podman.sock:/run/podman/podman.sock
+      - ./info.json:/app/info.json:ro
     security_opt: ["label=disable"]
 
   gateway:

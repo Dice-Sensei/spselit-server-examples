@@ -56,6 +56,7 @@ services:
       CONTROLLABLE: "ha2-back-a,ha2-back-b"
     volumes:
       - ${XDG_RUNTIME_DIR:-/run/user/1001}/podman/podman.sock:/run/podman/podman.sock
+      - ./info.json:/app/info.json:ro
     security_opt: ["label=disable"]
 
   gateway:

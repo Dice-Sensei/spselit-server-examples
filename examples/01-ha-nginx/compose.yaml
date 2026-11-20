@@ -46,6 +46,7 @@ services:
       CONTROLLABLE: "ha1-back-a,ha1-back-b"
     volumes:
       - ${XDG_RUNTIME_DIR:-/run/user/1001}/podman/podman.sock:/run/podman/podman.sock
+      - ./info.json:/app/info.json:ro
     security_opt: ["label=disable"]
 
   # Public live page on port 9001; teacher controls need the password.

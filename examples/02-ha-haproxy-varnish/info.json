@@ -1,0 +1,11 @@
+{
+  "title": "The same website, built the way big sites do it",
+  "about": "Big sites split the front door into two specialists. One remembers recent answers so most visitors never reach a real server. The other checks every second which servers are healthy and sends visitors only to those.",
+  "tryThis": "Stop ha2-back-a and watch the load balancer notice within a few seconds. Stop both back servers to see the friendly 'we are down' page.",
+  "roles": {
+    "ha2-varnish": "The memory. It keeps a fresh answer for 10 seconds and replies instantly without bothering the servers.",
+    "ha2-haproxy": "The traffic controller. It asks each server 'are you OK?' every second and skips the ones that are not.",
+    "ha2-back-a": "One of two identical web servers that build the page.",
+    "ha2-back-b": "The second identical web server."
+  }
+}

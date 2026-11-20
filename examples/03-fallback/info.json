@@ -1,0 +1,10 @@
+{
+  "title": "A 'we are down' page that appears by itself",
+  "about": "Sooner or later a website's server breaks or is being updated. Without preparation, visitors see a scary browser error. Here a spare page steps in automatically and tells them politely to come back later.",
+  "tryThis": "Stop fb-main and refresh the site on port 8003: you see the spare page. Start it again and the real site returns.",
+  "roles": {
+    "fb-front": "The front door. It uses the real site when it can and the spare page only when it cannot.",
+    "fb-main": "The real website that visitors normally see.",
+    "fb-fallback": "The spare page. It waits quietly and only shows when the real site is down."
+  }
+}
