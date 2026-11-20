@@ -1,5 +1,7 @@
 // Draws the live page. It asks /api/status every 2 seconds and paints one box per target.
-// The teacher page sets data-teacher on <body>, which adds stop/start buttons.
+// The teacher page sets data-teacher on <body>, which adds stop/start buttons and the
+// "try this" hint. All text from info.json goes in with textContent, never as HTML.
+const defaultTitle = document.getElementById('title').textContent;
 const isTeacher = document.body.dataset.teacher === 'true';
 
 async function control(name, action) {
@@ -15,9 +17,17 @@ function box(t, data) {
   label.textContent = t.name;
   const state = document.createElement('span');
   state.textContent = t.up
-    ? (t.role ? t.role + (t.replication_state ? ' (' + t.replication_state + ')' : '') : 'up') + (t.lag != null ? ' (lag ' + t.lag + ')' : '') + (t.ms != null ? ' · ' + t.ms + ' ms' : '')
+    ? 'UP' + (t.role ? ' · ' + t.role + (t.replication_state ? ' (' + t.replication_state + ')' : '') : '') + (t.lag != null ? ' (lag ' + t.lag + ')' : '') + (t.ms != null ? ' · ' + t.ms + ' ms' : '')
     : 'DOWN' + (t.error ? ' (' + t.error + ')' : '');
+  state.className = 'status';
   div.append(label, state);
+  const roleText = data.info && data.info.roles && data.info.roles[t.name];
+  if (typeof roleText === 'string' && roleText) {
+    const role = document.createElement('p');
+    role.className = 'role';
+    role.textContent = roleText;
+    div.append(role);
+  }
   if (isTeacher && data.controlsAvailable && data.controllable.includes(t.name)) {
     const b = document.createElement('button');
     b.textContent = t.up ? 'Stop' : 'Start';
@@ -30,7 +40,14 @@ function box(t, data) {
 async function refresh() {
   try {
     const data = await (await fetch('/api/status')).json();
-    document.getElementById('caption').textContent = data.caption;
+    const info = data.info || {};
+    document.getElementById('title').textContent = info.title || defaultTitle;
+    document.getElementById('about').textContent = info.about || data.caption || '';
+    const hint = document.getElementById('tryThis');
+    if (hint) {
+      hint.textContent = info.tryThis ? 'Try this: ' + info.tryThis : '';
+      hint.hidden = !info.tryThis;
+    }
     document.getElementById('targets').replaceChildren(...data.targets.map((t) => box(t, data)));
     document.getElementById('warning').textContent = data.warning || '';
     document.getElementById('note').textContent = isTeacher && !data.controlsAvailable

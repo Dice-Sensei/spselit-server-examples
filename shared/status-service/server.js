@@ -15,6 +15,7 @@ const FILES = {
   '/': ['index.html', 'text/html'],
   '/teacher/': ['teacher.html', 'text/html'],
   '/app.js': ['app.js', 'text/javascript'],
+  '/style.css': ['style.css', 'text/css'],
 };
 
 function readBody(req, limit = 4096) {

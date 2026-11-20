@@ -161,3 +161,31 @@ test('info edits show up without a restart', async () => {
   assert.strictEqual(first.info.title, 'one');
   assert.strictEqual(second.info.title, 'two');
 });
+
+// --- pages and stylesheet ---
+test('the stylesheet is served as CSS', async () => {
+  const app = await start({});
+  const r = await fetch(url(app, '/style.css'));
+  app.close();
+  assert.strictEqual(r.status, 200);
+  assert.ok(r.headers.get('content-type').startsWith('text/css'));
+});
+
+test('student page links the stylesheet and has no teacher hint; teacher page has it', async () => {
+  const app = await start({});
+  const student = await (await fetch(url(app, '/'))).text();
+  const teacher = await (await fetch(url(app, '/teacher/'))).text();
+  app.close();
+  assert.ok(student.includes('/style.css'));
+  assert.ok(!student.includes('id="tryThis"'));
+  assert.ok(teacher.includes('/style.css'));
+  assert.ok(teacher.includes('id="tryThis"'));
+});
+
+test('page script renders info as text, never as HTML', async () => {
+  const app = await start({});
+  const js = await (await fetch(url(app, '/app.js'))).text();
+  app.close();
+  assert.ok(js.includes('textContent'));
+  assert.ok(!js.includes('innerHTML'));
+});
