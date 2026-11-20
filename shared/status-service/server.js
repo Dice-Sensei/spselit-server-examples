@@ -1,5 +1,6 @@
 // The status service: a tiny web server with three jobs.
-//   GET  /api/status   -> who is up, how fast (the live page polls this)
+//   GET  /api/status   -> who is up, how fast, plus the example's plain-words text from
+//                         info.json (the live page polls this)
 //   POST /api/control  -> stop/start an allow-listed container (teachers only, see gateway)
 //   GET  /, /teacher/  -> the live page, and the same page with buttons
 //
@@ -28,6 +29,20 @@ function readBody(req, limit = 4096) {
 function send(res, status, body, type = 'application/json') {
   res.writeHead(status, { 'content-type': type, 'cache-control': 'no-store' });
   res.end(typeof body === 'string' ? body : JSON.stringify(body));
+}
+
+// The plain-words text for the live page (title, what it is, one line per box). It lives in
+// the example's own info.json. It is read on every request so an edit shows on the next refresh,
+// and anything unusable (missing file, broken JSON, not an object) just means "no extra text":
+// the page then falls back to the caption.
+function loadInfo(file) {
+  if (!file) return null;
+  try {
+    const value = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+  } catch {
+    return null;
+  }
 }
 
 function createApp(cfg) {
@@ -69,7 +84,7 @@ function createApp(cfg) {
     const pathname = req.url.split('?')[0];
 
     if (req.method === 'GET' && pathname === '/api/status') {
-      return send(res, 200, await snapshot());
+      return send(res, 200, { ...(await snapshot()), info: loadInfo(cfg.infoFile) });
     }
 
     if (req.method === 'POST' && pathname === '/api/control') {
@@ -97,6 +112,7 @@ if (require.main === module) {
     targets: JSON.parse(process.env.TARGETS || '[]'),
     controllable: (process.env.CONTROLLABLE || '').split(',').filter(Boolean),
     socketPath: process.env.PODMAN_SOCKET || '/run/podman/podman.sock',
+    infoFile: process.env.INFO_FILE || '/app/info.json',
     timeoutMs: 1500,
   };
   createApp(cfg).listen(Number(process.env.PORT || 3000), () => console.log('status service ready'));

@@ -108,3 +108,56 @@ test('a status request after the cache expires probes again', async () => {
   app.close(); target.close();
   assert.strictEqual(hits, 2);
 });
+
+// --- info.json: plain-words text for the live page ---
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+function infoFile(content) {
+  const f = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'info-')), 'info.json');
+  if (content !== undefined) fs.writeFileSync(f, content);
+  return f;
+}
+async function statusBody(app) { const b = await (await fetch(url(app, '/api/status'))).json(); app.close(); return b; }
+
+test('status includes info from the info file', async () => {
+  const app = await start({ infoFile: infoFile('{"title":"T","roles":{"a":"R"}}') });
+  const body = await statusBody(app);
+  assert.strictEqual(body.info.title, 'T');
+  assert.strictEqual(body.info.roles.a, 'R');
+});
+
+test('info is null when the file is missing, and the caption still works', async () => {
+  const app = await start({ infoFile: infoFile(undefined) });
+  const body = await statusBody(app);
+  assert.strictEqual(body.info, null);
+  assert.strictEqual(body.caption, 'hello');
+});
+
+test('info is null when no info file is configured', async () => {
+  const app = await start({});
+  assert.strictEqual((await statusBody(app)).info, null);
+});
+
+test('info is null when the file is not valid JSON', async () => {
+  const app = await start({ infoFile: infoFile('{nope') });
+  assert.strictEqual((await statusBody(app)).info, null);
+});
+
+test('info is null when the JSON is not an object', async () => {
+  for (const content of ['[1]', 'null', '"x"']) {
+    const app = await start({ infoFile: infoFile(content) });
+    assert.strictEqual((await statusBody(app)).info, null, content);
+  }
+});
+
+test('info edits show up without a restart', async () => {
+  const f = infoFile('{"title":"one"}');
+  const app = await start({ infoFile: f, cacheMs: 60000 });
+  const first = await (await fetch(url(app, '/api/status'))).json();
+  fs.writeFileSync(f, '{"title":"two"}');
+  const second = await (await fetch(url(app, '/api/status'))).json();
+  app.close();
+  assert.strictEqual(first.info.title, 'one');
+  assert.strictEqual(second.info.title, 'two');
+});
